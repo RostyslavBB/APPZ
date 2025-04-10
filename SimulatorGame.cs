@@ -1,4 +1,4 @@
-﻿class SimulatorGame : Game
+﻿public class SimulatorGame : Game
 {
     public bool HasSteeringWheel { get; set; }
 
@@ -11,11 +11,11 @@
     {
         if (IsRunning)
         {
-            Console.WriteLine(HasSteeringWheel ? $"{Name} is enhanced with steering wheel." : $"{Name} can be played, but a steering wheel would improve it.");
+            Notifier.Notify(Name, HasSteeringWheel ? "Enhanced with steering wheel." : "Steering wheel not connected.");
         }
         else
         {
-            Console.WriteLine($"Cannot use steering wheel, {Name} is not running!");
+            Notifier.Notify(Name, "Steering wheel usage failed: game not running.");
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿class OnlineCasino : Game
+﻿public class OnlineCasino : Game
 {
     public bool HasBrowser { get; }
 
@@ -7,18 +7,17 @@
         HasBrowser = hasBrowser;
     }
 
+    public bool CanStart(bool isConnected) => HasBrowser && isConnected;
+
     public void PlayOnline(bool isConnected)
     {
-        if (!HasBrowser)
+        if (CanStart(isConnected))
         {
-            Console.WriteLine($"Cannot play {Name} because no browser is available.");
-            return;
+            Notifier.Notify(Name, "Playing online.");
         }
-        if (!isConnected)
+        else
         {
-            Console.WriteLine($"Cannot play {Name} without an internet connection.");
-            return;
+            Notifier.Notify(Name, "Online play failed: no connection or browser not available.");
         }
-        Console.WriteLine($"Playing {Name} online.");
     }
 }

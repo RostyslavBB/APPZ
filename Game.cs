@@ -1,5 +1,7 @@
-﻿abstract class Game
+﻿public abstract class Game
 {
+    public static GameEventNotifier Notifier = new GameEventNotifier();
+
     public string Name { get; }
     public string Platform { get; }
     public int RequiredRAM { get; }
@@ -18,56 +20,51 @@
         RequiredStorage = storage;
         RequiredCPU = cpu;
         RequiredGPU = gpu;
-        IsInstalled = platform == "Browser"; // Браузерні ігри не потрібно встановлювати
+        IsInstalled = platform == "Browser";
     }
 
-    public void Install(int availableStorage, string systemOS)
+    public virtual void Install(int availableStorage, string systemOS)
     {
         if (Platform == "Browser")
         {
-            Console.WriteLine($"{Name} does not require installation.");
+            Notifier.Notify(Name, "Already available in browser, no installation needed.");
             return;
         }
         if (systemOS != "Windows")
         {
-            Console.WriteLine($"Cannot install {Name}, it requires Windows.");
+            Notifier.Notify(Name, "Installation failed: unsupported OS.");
             return;
         }
         if (availableStorage < RequiredStorage)
-            Console.WriteLine($"Not enough storage to install {Name}.");
-        else
         {
-            IsInstalled = true;
-            Console.WriteLine($"{Name} installed successfully.");
+            Notifier.Notify(Name, "Installation failed: not enough storage.");
+            return;
         }
+        IsInstalled = true;
+        Notifier.Notify(Name, "Installed successfully.");
     }
 
-    public void Start(int availableRAM, int availableCPU, int availableGPU, ref Game currentGame)
+    public virtual void Start(int availableRAM, int availableCPU, int availableGPU, ref Game currentGame)
     {
         if (!IsInstalled)
         {
-            Console.WriteLine($"Game {Name} is not installed!");
+            Notifier.Notify(Name, "Start failed: game not installed.");
             return;
         }
-        if (Platform == "Browser")
+        if (Platform != "Browser" && (availableRAM < RequiredRAM || availableCPU < RequiredCPU || availableGPU < RequiredGPU))
         {
-            Console.WriteLine($"{Name} launched in browser.");
-            currentGame = this;
-            return;
-        }
-        if (availableRAM < RequiredRAM || availableCPU < RequiredCPU || availableGPU < RequiredGPU)
-        {
-            Console.WriteLine($"Not enough system resources to run {Name}.");
+            Notifier.Notify(Name, "Start failed: system requirements not met.");
             return;
         }
         if (currentGame != null && currentGame.IsRunning)
         {
-            Console.WriteLine($"Cannot start {Name} while {currentGame.Name} is running.");
+            Notifier.Notify(Name, "Start failed: another game is already running.");
             return;
         }
+
         IsRunning = true;
         currentGame = this;
-        Console.WriteLine($"{Name} started.");
+        Notifier.Notify(Name, "Started");
     }
 
     public void SaveGame()
@@ -75,18 +72,24 @@
         if (IsRunning)
         {
             IsSaved = true;
-            Console.WriteLine($"{Name} saved.");
+            Notifier.Notify(Name, "Saved");
         }
         else
-            Console.WriteLine($"Cannot save {Name}, as it is not running!");
+        {
+            Notifier.Notify(Name, "Save failed: game is not running.");
+        }
     }
 
     public void LoadGame()
     {
         if (IsSaved)
-            Console.WriteLine($"{Name} loaded successfully.");
+        {
+            Notifier.Notify(Name, "Loaded");
+        }
         else
-            Console.WriteLine($"No saved data to load for {Name}.");
+        {
+            Notifier.Notify(Name, "Load failed: no saved state available.");
+        }
     }
 
     public void Stop(ref Game currentGame)
@@ -95,7 +98,11 @@
         {
             IsRunning = false;
             currentGame = null;
-            Console.WriteLine($"{Name} closed.");
+            Notifier.Notify(Name, "Stopped");
+        }
+        else
+        {
+            Notifier.Notify(Name, "Stop failed: game is not running.");
         }
     }
 }
